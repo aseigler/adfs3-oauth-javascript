@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <script src="//code.jquery.com/jquery-3.2.1.min.js" type="text/javascript"></script>
+    <script src="./jsrsasign-all-min.js"></script>
+    <title></title>
+    <style>
+        button {
+            display: none;
+        }
+
+        .cert, .code, .token {
+            display: inline;
+        }
+    </style>
+    <style type="text/css">
+        TD {
+            vertical-align: top;
+            border: solid 1px #000000;
+        }
+    </style>
+
+    <script language="JavaScript" type="text/javascript">
+
+function doVerify() {
+    if (document.form1.jws1.value === "")
+    {
+        alert('Missing token');
+        return false;
+    }
+    if (document.form1.cert1.value === "")
+    {
+        alert('Missing cert');
+        return false;
+    }
+  var sJWS = document.form1.jws1.value;
+  var sCert = document.form1.cert1.value;
+  var pubKey;
+  var jws = new KJUR.jws.JWS();
+  var result = 0;
+    try {
+    pubKey = KEYUTIL.getKey(sCert);
+    jws.parseJWS(sJWS);
+    result = KJUR.jws.JWS.verify(sJWS, pubKey, ["RS256"]);
+  } catch (ex) {
+    alert("Error: " + ex);
+    result = 0;
+  }
+
+  document.form1.im_enchead1.value = jws.parsedJWS.headB64U;
+  document.form1.im_encpayload1.value = jws.parsedJWS.payloadB64U;
+  document.form1.im_encsigval1.value = jws.parsedJWS.sigvalB64U;
+  document.form1.im_siginput1.value = jws.parsedJWS.si;
+  document.form1.im_sigval_h1.value = jws.parsedJWS.sigvalH;
+  document.form1.im_head1.value = jws.parsedJWS.headS;
+  document.form1.im_payload1.value = jws.parsedJWS.payloadS;
+
+  if (result == 1) {
+    alert("JWS signature is *Valid*.");
+  } else {
+    alert("JWS signature is *Invalid*.");
+  }
+}
+    </script>
+
+</head>
+<body class="no-token">
+    <form name="form1">
+        <h1>Sample ADFS 3.0 OAuth Test Application</h1>
+        <table>
+            <tbody>
+                <tr>
+                    <td rowspan="6">Input</td>
+                    <td>Federation Service</td>
+                    <td colspan="2">
+                        <textarea name="fs1" rows="1" cols="100" placeholder="fs.contoso.com"></textarea>
+                    </td>
+                </tr>
+                <tr>
+                    <td>Test Site</td>
+                    <td colspan="2">
+                        <textarea name="site1" rows="1" cols="100" placeholder="https://www.contoso.com/"></textarea>
+                    </td>
+                </tr>
+                <tr>
+                    <td>Code</td>
+                    <td colspan="2">
+                        <textarea name="code1" rows="3" cols="100"></textarea>
+                    </td>
+                </tr>
+                <tr>
+                    <td>Access Token</td>
+                    <td colspan="2">
+                        <textarea name="jws1" rows="3" cols="100"></textarea></td>
+                        <td>
+                        <table>
+                            <tr>
+                                <td>Expires</td>
+                                <td><textarea title="Expires" name="expires" rows="1" cols="20" readonly></textarea></td>
+                            </tr>
+                            <tr>
+                                <td>Type</td>
+                                <td><textarea title="Type" name="type" rows="1" cols="20" readonly></textarea></td>
+                            </tr>
+                        </table>
+                        </td>
+                </tr>
+                <tr>
+                    <td>Refresh Token</td>
+                    <td colspan="2">
+                        <textarea name="refresh" rows="3" cols="100"></textarea>
+                    </td>
+                </tr>
+                <tr>
+                    <td>Signing certificate</td>
+                    <td colspan="2">
+                        <textarea name="cert1" cols="100" rows="4"></textarea>
+                    </td>
+                </tr>
+                <tr>
+                    <td colspan="4">
+                        <input type="button" id="btncert" value="Get Cert" onClick="getCert();" />
+                        <input type="button" id="btncode" value="Get Authorization Code" onClick="getCode();" />
+                        <input type="button" id="btntoken" value="Get Token" onClick="getToken();" />
+                        <input type="button" id="btnverify" value="Verify Token Signature" onClick="doVerify();" />
+                        <input type="button" id="btnrefresh" value="Refresh Token" onClick="getRefresh();" />
+                        <input type="button" id="btnreset" value="Reset form" onClick="doReset();" />
+                    </td>
+                </tr>
+                <tr>
+                    <td colspan="2">Encoded Head</td>
+                    <td colspan="2">
+                        <textarea name="im_enchead1" cols="100" rows="1" readonly></textarea>
+                    </td>
+                </tr>
+                <tr>
+                    <td colspan="2">Encoded Payload</td>
+                    <td colspan="2">
+                        <textarea name="im_encpayload1" cols="100" rows="1" readonly></textarea>
+                    </td>
+                </tr>
+                <tr>
+                    <td colspan="2">Encoded Signature Value</td>
+                    <td colspan="2">
+                        <textarea name="im_encsigval1" cols="100" rows="4" readonly></textarea>
+                    </td>
+                </tr>
+                <tr>
+                    <td colspan="2">Signature Input</td>
+                    <td colspan="2">
+                        <textarea name="im_siginput1" cols="100" rows="3" readonly></textarea>
+                    </td>
+                </tr>
+                <tr>
+                    <td colspan="2">Signature Value (Hex)</td>
+                    <td colspan="2">
+                        <textarea name="im_sigval_h1" cols="100" rows="6" readonly></textarea>
+                    </td>
+                </tr>
+                <tr>
+                    <td colspan="2">Head</td>
+                    <td colspan="2">
+                        <textarea name="im_head1" cols="100" rows="1" readonly></textarea>
+                    </td>
+                </tr>
+                <tr>
+                    <td colspan="2">Payload</td>
+                    <td colspan="2">
+                        <textarea name="im_payload1" cols="100" rows="6" readonly></textarea>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </form>
+
+    <script>
+        if (code = localStorage.getItem("code"))
+        {
+            document.form1.code1.value = code;
+        }
+
+        if (window.location.search) {
+            code = processCodeCallback();
+        }
+
+        if (cert = localStorage.getItem("cert"))
+        {
+            document.form1.cert1.value = cert;
+        }
+
+        if (fs = localStorage.getItem('fs'))
+        {
+            document.form1.fs1.value = fs;
+        }
+
+        if (site = localStorage.getItem('site'))
+        {
+            document.form1.site1.value = site;
+        }
+
+        function doReset()
+        {
+            document.form1.reset();
+            localStorage.clear();
+        }
+
+        function resetOutput()
+        {
+            document.form1.im_enchead1.value = "";
+            document.form1.im_encpayload1.value = "";
+            document.form1.im_encsigval1.value = "";
+            document.form1.im_siginput1.value = "";
+            document.form1.im_sigval_h1.value = "";
+            document.form1.im_head1.value = "";
+            document.form1.im_payload1.value = "";
+        }
+
+        function getCert() {
+            if (false == checkFS()) return false;
+            document.form1.cert1.value = "";
+            if (cert = localStorage.getItem("cert"))
+            {
+                localStorage.removeItem("cert");
+            }
+            jQuery.ajax({
+                url: 'https://' +  document.form1.fs1.value + '/federationmetadata/2007-06/federationmetadata.xml',
+                type: 'GET',
+                dataType: "xml",
+            }).done(function (xml) {
+                var cert = $(xml).find('KeyDescriptor[use="signing"]').first().find('X509Certificate');
+                document.form1.cert1.value = '-----BEGIN CERTIFICATE-----\r\n' + cert[0].textContent + '\r\n-----END CERTIFICATE-----';
+                localStorage.setItem("cert", document.form1.cert1.value);
+            });
+        };
+        
+        function checkFS()
+        {
+            var fs = document.form1.fs1.value;
+            if (fs === "") {
+                alert("Missing federation service!");
+                return false;
+            }
+            else {
+                localStorage.setItem('fs', fs);
+                return true;
+            }
+        }
+
+        function checkCode()
+        {
+            var code = document.form1.code1.value;
+            if (code === "")
+            {
+                alert("Missing authorization code!");
+                return false;
+            }
+            return true;
+        }
+
+        function checkSite()
+        {
+            var site = document.form1.site1.value;
+             if (site  === "")
+            {
+                alert('Missing test site');
+                return false;
+             }
+             else {
+                 localStorage.setItem('site', site);
+                 return true;
+             }
+        }
+
+        function getUrlParameter(sParam) {
+            var sPageURL = decodeURIComponent(window.location.search.substring(1)),
+                sURLVariables = sPageURL.split('&'),
+                sParameterName,
+                i;
+
+            for (i = 0; i < sURLVariables.length; i++) {
+                sParameterName = sURLVariables[i].split('=');
+
+                if (sParameterName[0] === sParam) {
+                    return sParameterName[1] === undefined ? true : sParameterName[1];
+                }
+            }
+        };
+
+        function getCode() {
+            if (false == checkFS() || false == checkSite()) { return false; }
+            else {
+                var authorizationUrl = 'https://' + document.form1.fs1.value + '/adfs/OAuth2/Authorize';
+                var client_id = document.form1.site1.value;
+                var redirect_uri = document.form1.site1.value;
+                var response_type = "code";
+                var resource = document.form1.site1.value;
+
+                var url =
+                    authorizationUrl + "?" +
+                    "client_id=" + encodeURI(client_id) + "&" +
+                    "redirect_uri=" + encodeURI(redirect_uri) + "&" +
+                    "response_type=" + encodeURI(response_type) + "&" +
+                    "resource=" + encodeURI(resource);
+                window.location = url;
+            }
+        }
+
+        function processCodeCallback() {
+            var code = getUrlParameter("code");
+            localStorage.setItem("code", code);
+            if (!code.error) {
+                document.form1.code1.value = code;
+            }
+        }
+
+        function getToken() {
+            if (false == checkFS() || false == checkCode() || false == checkSite()) return false;
+            if (document.form1.jws1.value != "") {
+                alert('Cannot reuse authorization codes')
+                return false;
+            }
+            else {
+                jQuery.ajax({
+                    'type': "POST",
+                    'url': 'https://' + document.form1.fs1.value + '/adfs/oauth2/token',
+                    'data': ({ grant_type: 'authorization_code', client_id: document.form1.site1.value, redirect_uri: document.form1.site1.value, code: document.form1.code1.value }),
+                    'success': function (data) { document.form1.jws1.value = data.access_token; document.form1.expires.value = data.expires_in; document.form1.type.value = data.token_type; document.form1.refresh.value = data.refresh_token; },
+                    'error': function (XMLHttpRequest, textStatus, errorThrown) {
+                        alert('Error: ' + errorThrown);
+                        console.log(XMLHttpRequest.status + ' ' + XMLHttpRequest.statusText);
+                        return false;
+                    }
+                });
+            }
+        }
+
+        function getRefresh() {
+            if (false == checkFS() || false == checkCode() || false == checkSite()) return false;
+            if (document.form1.refresh.value === "") {
+                alert('Missing refresh token')
+                return false;
+            }
+            else {
+                jQuery.ajax({
+                    'type': "POST",
+                    'url': 'https://' + document.form1.fs1.value + '/adfs/oauth2/token',
+                    'data': ({ grant_type: 'refresh_token', client_id: document.form1.site1.value, redirect_uri: document.form1.site1.value, refresh_token: document.form1.refresh.value }),
+                    'success': function (data) { document.form1.jws1.value = data.access_token; document.form1.expires.value = data.expires_in; document.form1.type.value = data.token_type; resetOutput(); },
+                    'error': function (XMLHttpRequest, textStatus, errorThrown) {
+                        alert('Error: ' + errorThrown);
+                        console.log(XMLHttpRequest.status + ' ' + XMLHttpRequest.statusText);
+                        return false;
+                    }
+                });
+            }
+        }
+    </script>
+</body>
+</html>
